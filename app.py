@@ -68,7 +68,7 @@ def on_message(ws, msg):
 
             if last_rsi > RSI_OVERBOUGHT: 
                 stop_price = close_price + (float(last_atr) * 2.00)
-                profit_price = (stop_price-close_price) * 2.50
+                profit_price = close_price - ((stop_price-close_price) * 2.00)
                 msg = """[{}] [RSI ALERT] \n[{} {}]\nOverbought SHORT order
                 {} entry price: {:.3f}$
                 {} take-profit: {:.3f}$
@@ -77,8 +77,8 @@ def on_message(ws, msg):
 
             if last_rsi < RSI_OVERSOLD:
                 stop_price = close_price - (float(last_atr) * 2.00)
-                profit_price = (close_price-stop_price) * 2.50
-                msg = """[{dt}] [RSI ALERT] \n[{} {}]\nOversold LONG order
+                profit_price = close_price + ((close_price-stop_price) * 2.00)
+                msg = """[{}] [RSI ALERT] \n[{} {}]\nOversold LONG order
                 {} entry price: {:.3f}$
                 {} take-profit: {:.3f}$
                 {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, long, close_price, profit, profit_price, stop, stop_price)
