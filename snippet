@@ -1,0 +1,11 @@
+import sqlite3
+
+db_file = 'database.db'
+conn = sqlite3.connect(db_file)
+cur = conn.cursor()
+
+frame = (str(time), candle['s'], candle['o'], candle['h'], candle['c'], candle['l'], candle['v'])
+
+sql = """INSERT INTO crypto(dateTime,symbol,open,high,close,low,volume) VALUES(?,?,?,?,?,?,?);"""
+cur.execute(sql, frame)
+conn.commit()
