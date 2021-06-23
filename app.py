@@ -9,15 +9,15 @@ dt = datetime.datetime.now()
 dt = dt.strftime("%d.%m|%H:%M")
 
 # Global constants
-SOCKET = "wss://stream.binance.com:9443/ws/ethusdt@kline_1m"
 RSI_PERIOD = 14
 ATR_PERIOD = 14
-RSI_OVERBOUGHT = 70
-RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 73
+RSI_OVERSOLD = 27
 RSI_MIDDLE = 50
-TIMEFRAME = '1m'
+TIMEFRAME = '3m'
 TRADE_SYMBOL = 'ETHUSDT'
 TRADE_QUANTITY = 0.05
+SOCKET = f"wss://stream.binance.com:9443/ws/{TRADE_SYMBOL.lower()}@kline_{TIMEFRAME}"
 long = '↗️'
 short = '↘️'
 stop = '⏹'
@@ -51,11 +51,12 @@ def on_message(ws, msg):
     # {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, short, close_price, profit, 1234.4, stop, 5000.44)
     # telegram_send.send(messages=[msg_t])
 
+    # print("close price: {}, high price: {}, low price: {}".format(close_price, high_price, low_price))
+
     if is_candle_closed:
         closes.append(close_price)
         highs.append(high_price)
         lows.append(low_price)
-        print("close price: {}, high price: {}, low price: {}".format(close_price, high_price, low_price))
 
         if len(closes) > RSI_PERIOD:
             np_closes = np.array(closes)
@@ -83,11 +84,6 @@ def on_message(ws, msg):
                 {} take-profit: {:.3f}$
                 {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, long, close_price, profit, profit_price, stop, stop_price)
                 telegram_send.send(messages=[msg])
-            
-            # Defend from overflow
-            closes.pop(0)
-            highs.pop(0)
-            lows.pop(0)
 
 
 ws = websocket.WebSocketApp(SOCKET, on_open=on_open, on_close=on_close, on_message=on_message)
