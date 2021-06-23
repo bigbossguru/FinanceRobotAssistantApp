@@ -36,7 +36,7 @@ def on_close(ws):
     telegram_send.send(messages=[f'[{dt}] [SERVER] \nConnection is close'])
 
 def on_message(ws, msg):
-    global closes, in_position, message
+    global closes, in_position, highs, lows
 
     json_msg = json.loads(msg)
     candle = json_msg['k']
@@ -44,6 +44,12 @@ def on_message(ws, msg):
     close_price = float(candle['c'])
     high_price = float(candle['h'])
     low_price = float(candle['l'])
+
+    # msg_t = """[{}] [RSI ALERT] \n[{} {}]\nOverbought SHORT order
+    # {} entry price: {:.3f}$
+    # {} take-profit: {:.3f}$
+    # {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, short, close_price, profit, 1234.4, stop, 5000.44)
+    # telegram_send.send(messages=[msg_t])
 
     if is_candle_closed:
         closes.append(close_price)
@@ -61,21 +67,21 @@ def on_message(ws, msg):
             last_atr = atr[-1]
 
             if last_rsi > RSI_OVERBOUGHT: 
-                stop_price = close_price + (float(last_atr) * 2)
-                profit_price = (stop_price-close_price) * 2,5
-                msg = """[{}] [RSI ALERT] [{} {}]\nOverbought SHORT order
-            {} entry price: {:.3f}$
-            {} take-profit: {:.3f}$
-            {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, short, close_price, profit, profit_price, stop, stop_price)
+                stop_price = close_price + (float(last_atr) * 2.00)
+                profit_price = (stop_price-close_price) * 2.50
+                msg = """[{}] [RSI ALERT] \n[{} {}]\nOverbought SHORT order
+                {} entry price: {:.3f}$
+                {} take-profit: {:.3f}$
+                {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, short, close_price, profit, profit_price, stop, stop_price)
                 telegram_send.send(messages=[msg])
 
             if last_rsi < RSI_OVERSOLD:
-                stop_price = close_price - (float(last_atr) * 2)
-                profit_price = (close_price-stop_price) * 2,5
-                msg = """[{dt}] [RSI ALERT] [{} {}]\nOversold LONG order
-            {} entry price: {:.3f}$
-            {} take-profit: {:.3f}$
-            {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, long, close_price, profit, profit_price, stop, stop_price)
+                stop_price = close_price - (float(last_atr) * 2.00)
+                profit_price = (close_price-stop_price) * 2.50
+                msg = """[{dt}] [RSI ALERT] \n[{} {}]\nOversold LONG order
+                {} entry price: {:.3f}$
+                {} take-profit: {:.3f}$
+                {} stop-loss:   {:.3f}$""".format(dt, TRADE_SYMBOL, TIMEFRAME, long, close_price, profit, profit_price, stop, stop_price)
                 telegram_send.send(messages=[msg])
             
             # Defend from overflow
