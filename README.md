@@ -2,7 +2,7 @@
 Crypto alert app, which send signals to telegram bot
 
 ## Manual
-
+### Install Python version 3.7.9
 ### Install and activate virtual environment
 ```
 python -m venv venv
