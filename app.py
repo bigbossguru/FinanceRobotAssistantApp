@@ -1,4 +1,3 @@
-from os import close
 import websocket, json
 import numpy as np
 import talib
@@ -88,4 +87,4 @@ def on_message(ws, msg):
 
 ws = websocket.WebSocketApp(SOCKET, on_open=on_open, on_close=on_close, on_message=on_message)
 ws.run_forever()
-telegram_send.send(messages=[f'[{dt}] [SERVER] Crash server'])
+telegram_send.send(messages=[f'[{dt}] [SERVER] Closed server'])

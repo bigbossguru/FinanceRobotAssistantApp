@@ -24,7 +24,6 @@ requests==2.25.1
 six==1.16.0
 slackclient==2.9.3
 SQLAlchemy==1.4.18
-TA-Lib @ file:///C:/Users/egazizov/CryptoAlertApp/lib/TA_Lib-0.4.20-cp37-cp37m-win_amd64.whl
 telegram-send==0.25
 tornado==6.1
 twilio==6.60.0
