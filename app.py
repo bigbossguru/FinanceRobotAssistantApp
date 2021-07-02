@@ -42,17 +42,12 @@ def main():
         high_price = float(candlestick['h'])
         low_price = float(candlestick['l'])
 
-        
-        # send_telegram_info(dt, [1234,123,123], 'RSI', 'LONG', 'OVERSOLD')
-
         if is_candle_closed:
-            # print("open_price: {}, close price: {}, high price: {}, low price: {}".format(open_price, close_price, high_price, low_price))
             binance.record_candlesticks_data(open_price, close_price, high_price, low_price)
             data = binance.get_data()
-            data_set_test = [close_price, high_price, low_price]
-            send_telegram_info(dt, data_set_test, 'TEST', 'TEST', 'TEST')
 
-            if len(data['close_prices']) > RSI_PERIOD:
+
+            if len(data['candlestick']['close_prices']) > RSI_PERIOD:
                 np_closes = np.array(data['candlestick']['close_prices'])
                 np_highs = np.array(data['candlestick']['high_prices'])
                 np_lows = np.array(data['candlestick']['low_prices'])
@@ -60,12 +55,16 @@ def main():
                 atr = talib.ATR(np_highs, np_lows, np_closes, timeperiod=ATR_PERIOD)
                 last_rsi = rsi[-1]
                 last_atr = atr[-1]
+                binance.record_indicators_data(last_rsi, last_atr)
+                msg_bot = """{}\nclose price: {:.3f}\nlast_rsi: {:.1f}\nlast_atr: {:.1f}""".format(dt, close_price, last_rsi, last_atr)
+                telegram_send.send(messages=msg_bot)
 
                 if last_rsi > RSI_OVERBOUGHT: 
                     stop_price = close_price + (float(last_atr) * 2.00)
                     profit_price = close_price - ((stop_price-close_price) * 2.00)
                     price_set = [close_price, profit_price, stop_price]
                     send_telegram_info(dt, price_set, 'RSI', 'SHORT', 'Overbought')
+                    print(price_set, last_rsi, last_atr)
 
 
                 if last_rsi < RSI_OVERSOLD:
@@ -73,12 +72,13 @@ def main():
                     profit_price = close_price + ((close_price-stop_price) * 2.00)
                     price_set = [close_price, profit_price, stop_price]
                     send_telegram_info(dt, price_set, 'RSI', 'LONG', 'Oversold')
-
+                    print(price_set, last_rsi, last_atr)
 
 
     ws = websocket.WebSocketApp(SOCKET, on_open=on_open, on_close=on_close, on_message=on_message)
     ws.run_forever()
     telegram_send.send(messages=[f'[{dt}] [SERVER] Closed server'])
+
 
 def send_telegram_info(d_t, prices, indicator='N/A', type_pos='N/A', level_type='N/A'):
     long = '↗️'
