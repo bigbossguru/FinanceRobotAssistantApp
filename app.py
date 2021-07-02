@@ -23,15 +23,13 @@ SOCKET = f"wss://stream.binance.com:9443/ws/{TRADE_SYMBOL.lower()}@kline_{TIMEFR
 
 
 def main():
-    dt = datetime.datetime.now()
-    dt = dt.strftime("%d.%m|%H:%M")
     binance = Binance()
 
     def on_open(ws):
-        telegram_send.send(messages=[f'[{dt}] [SERVER] \nConnection is open'])
+        telegram_send.send(messages=[f'[{data_time_info()}] [SERVER] \nConnection is open'])
 
     def on_close(ws):
-        telegram_send.send(messages=[f'[{dt}] [SERVER] \nConnection is close'])
+        telegram_send.send(messages=[f'[{data_time_info()}] [SERVER] \nConnection is close'])
 
     def on_message(ws, msg):
         json_msg = json.loads(msg)
@@ -56,29 +54,33 @@ def main():
                 last_rsi = rsi[-1]
                 last_atr = atr[-1]
                 binance.record_indicators_data(last_rsi, last_atr)
-                msg_bot = """{}\nclose price: {:.3f}\nlast_rsi: {:.1f}\nlast_atr: {:.1f}""".format(dt, close_price, last_rsi, last_atr)
-                telegram_send.send(messages=msg_bot)
+                msg_bot = "{}\nclose price: {:.3f}\nlast_rsi: {:.1f}\nlast_atr: {:.1f}".format(data_time_info(), close_price, last_rsi, last_atr)
+                telegram_send.send(messages=[msg_bot])
 
                 if last_rsi > RSI_OVERBOUGHT: 
                     stop_price = close_price + (float(last_atr) * 2.00)
                     profit_price = close_price - ((stop_price-close_price) * 2.00)
                     price_set = [close_price, profit_price, stop_price]
-                    send_telegram_info(dt, price_set, 'RSI', 'SHORT', 'Overbought')
-                    print(price_set, last_rsi, last_atr)
+                    send_telegram_info(data_time_info(), price_set, 'RSI', 'SHORT', 'Overbought')
+                    # print(price_set, last_rsi, last_atr)
 
 
                 if last_rsi < RSI_OVERSOLD:
                     stop_price = close_price - (float(last_atr) * 2.00)
                     profit_price = close_price + ((close_price-stop_price) * 2.00)
                     price_set = [close_price, profit_price, stop_price]
-                    send_telegram_info(dt, price_set, 'RSI', 'LONG', 'Oversold')
-                    print(price_set, last_rsi, last_atr)
+                    send_telegram_info(data_time_info(), price_set, 'RSI', 'LONG', 'Oversold')
+                    # print(price_set, last_rsi, last_atr)
 
 
     ws = websocket.WebSocketApp(SOCKET, on_open=on_open, on_close=on_close, on_message=on_message)
     ws.run_forever()
-    telegram_send.send(messages=[f'[{dt}] [SERVER] Closed server'])
+    telegram_send.send(messages=[f'[{data_time_info()}] [SERVER] Closed server'])
 
+def data_time_info():
+    dt = datetime.datetime.now()
+    dt = dt.strftime("%d.%m|%H:%M")
+    return dt
 
 def send_telegram_info(d_t, prices, indicator='N/A', type_pos='N/A', level_type='N/A'):
     long = '↗️'
