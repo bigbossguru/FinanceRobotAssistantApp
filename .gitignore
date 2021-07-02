@@ -17,7 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-#lib/
+lib/config_privat.py
 lib64/
 parts/
 sdist/
