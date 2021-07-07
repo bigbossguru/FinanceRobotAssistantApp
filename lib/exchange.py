@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import json
+import datetime
 
 class Exchange(ABC):
 
@@ -14,20 +15,23 @@ class Exchange(ABC):
 
 
 class Binance(Exchange):
-    _opens = list()
-    _closes = list()
-    _highs = list()
-    _lows = list()
-    _in_position = False
-    _last_rsi = 0.0
-    _last_atr = 0.0
+    def __init__(self):
+        self._opens = list()
+        self._closes = list()
+        self._highs = list()
+        self._lows = list()
+        self._in_position = False
+        self._last_atr = 0.0
+        self._last_rsi = 0.0
     def get_data(self):
         res = {
+            "date_time": str(datetime.datetime.now()),
             "indicators": {
                 'rsi': self._last_rsi,
                 'atr': self._last_atr
             },
             "candlestick": {
+                'count_candle': len(self._closes),
                 'open_prices': self._opens,
                 'close_prices': self._closes,
                 'high_prices': self._highs,
@@ -43,8 +47,8 @@ class Binance(Exchange):
         self._highs.append(high)
         self._lows.append(low)
     def record_indicators_data(self, rsi, atr):
-        self.rsi = rsi
-        self.atr = atr
+        self._last_rsi = rsi
+        self._last_atr = atr
 
 class Coinbase(Exchange):
     def __init__(self, symbol, price):

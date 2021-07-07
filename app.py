@@ -1,16 +1,19 @@
 import websocket, json
 import numpy as np
 import talib
+from talib import stream
 import telegram_send, telegram
 import datetime
 from lib.exchange import Binance
 import lib.config as conf
+from lib.trade import Trade
 # from pprint import pprint
 
 # Telegram Bot 
 bot = telegram.Bot(conf.API_TOKEN)
 
 # Global constants
+BALANCE = 1000.0
 RSI_PERIOD = 14
 ATR_PERIOD = 14
 RSI_OVERBOUGHT = 70
@@ -24,6 +27,7 @@ SOCKET = f"wss://stream.binance.com:9443/ws/{TRADE_SYMBOL.lower()}@kline_{TIMEFR
 
 def main():
     binance = Binance()
+    trading = Trade(BALANCE)
 
     def on_open(ws):
         telegram_send.send(messages=[f'[{data_time_info()}] [SERVER] \nConnection is open'])
@@ -49,19 +53,22 @@ def main():
                 np_closes = np.array(data['candlestick']['close_prices'])
                 np_highs = np.array(data['candlestick']['high_prices'])
                 np_lows = np.array(data['candlestick']['low_prices'])
-                rsi = talib.RSI(np_closes, timeperiod=RSI_PERIOD)
-                atr = talib.ATR(np_highs, np_lows, np_closes, timeperiod=ATR_PERIOD)
-                last_rsi = rsi[-1]
-                last_atr = atr[-1]
+                rsi_ = stream.RSI(np_closes, timeperiod=14)
+                atr_ = stream.ATR(np_highs, np_lows, np_closes, timeperiod=14)
+                # rsi = talib.RSI(np_closes, timeperiod=RSI_PERIOD)
+                # atr = talib.ATR(np_highs, np_lows, np_closes, timeperiod=ATR_PERIOD)
+                last_rsi = rsi_[-1]
+                last_atr = atr_[-1]
                 binance.record_indicators_data(last_rsi, last_atr)
-                msg_bot = "{}\nclose price: {:.3f}\nlast_rsi: {:.1f}\nlast_atr: {:.1f}".format(data_time_info(), close_price, last_rsi, last_atr)
-                telegram_send.send(messages=[msg_bot])
+                # msg_bot = "{}\nclose price: {:.3f}\nlast_rsi: {:.1f}\nlast_atr: {:.1f}".format(data_time_info(), close_price, last_rsi, last_atr)
+                # telegram_send.send(messages=[msg_bot])
 
                 if last_rsi > RSI_OVERBOUGHT: 
                     stop_price = close_price + (float(last_atr) * 2.00)
                     profit_price = close_price - ((stop_price-close_price) * 2.00)
                     price_set = [close_price, profit_price, stop_price]
                     send_telegram_info(data_time_info(), price_set, 'RSI', 'SHORT', 'Overbought')
+                    trading.order(TRADE_SYMBOL, TRADE_QUANTITY, close_price, stop_price, profit_price)
                     # print(price_set, last_rsi, last_atr)
 
 
@@ -70,7 +77,10 @@ def main():
                     profit_price = close_price + ((close_price-stop_price) * 2.00)
                     price_set = [close_price, profit_price, stop_price]
                     send_telegram_info(data_time_info(), price_set, 'RSI', 'LONG', 'Oversold')
+                    trading.order(TRADE_SYMBOL, TRADE_QUANTITY, close_price, stop_price, profit_price)
                     # print(price_set, last_rsi, last_atr)
+        
+        trading.update_market(close_price)
 
 
     ws = websocket.WebSocketApp(SOCKET, on_open=on_open, on_close=on_close, on_message=on_message)
