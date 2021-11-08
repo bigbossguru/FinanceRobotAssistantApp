@@ -19,6 +19,8 @@ pip install -r requirements.txt
 ### Install TA_lib module
 ```
 pip install lib/TA_lib-0.4.20-xxxx-xxxx-xxxx.whl
+or
+https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
 ```
 ### Config API token
 ```
